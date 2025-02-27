@@ -1,7 +1,6 @@
 import express from "express";
-import { getAuth, createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import bcrypt from "bcrypt";
+import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase.js";
 
 const app = express();
@@ -112,7 +111,10 @@ app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log("Login request body:", req.body); // Log the request body
+
     if (!email || !password) {
+      console.log("Missing email or password"); // Log missing fields
       return res.status(400).send("Email and password are required.");
     }
 
@@ -120,6 +122,7 @@ app.post("/api/login", async (req, res) => {
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
+      console.log("Invalid email or password: User not found"); // Log invalid email
       return res.status(400).send("Invalid email or password.");
     }
 
@@ -129,25 +132,21 @@ app.post("/api/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.log("Invalid email or password: Incorrect password"); // Log invalid password
       return res.status(400).send("Invalid email or password.");
     }
 
+    console.log("User logged in successfully:", user.email); // Log successful login
     res.send({ id: userDoc.id, email: user.email });
   } catch (e) {
+    console.error("Error during login:", e.message); // Log the error
     res.status(500).send(e.message);
   }
 });
 
 app.post("/api/logout", (req, res) => {
-  const auth = getAuth();
-  signOut(auth)
-    .then(() => {
-      // Signed out
-      res.send("Signed out");
-    })
-    .catch((error) => {
-      res.send(error.message);
-    });
+  // Invalidate the token (this can be done by the client by removing the token from storage)
+  res.send("Logged out");
 });
 
 // Start the server
