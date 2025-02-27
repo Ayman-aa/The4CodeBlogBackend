@@ -108,19 +108,34 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-app.post("/api/login", (req, res) => {
-  const auth = getAuth();
-  signInWithEmailAndPassword(auth, req.body.email, req.body.password)
-    .then((userCredential) => {
-      // Signed in
-      const user = userCredential.user;
-      res.send(user);
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      res.send(errorMessage);
-    });
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).send("Email and password are required.");
+    }
+
+    const q = query(collection(db, "users"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return res.status(400).send("Invalid email or password.");
+    }
+
+    const userDoc = querySnapshot.docs[0];
+    const user = userDoc.data();
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).send("Invalid email or password.");
+    }
+
+    res.send({ id: userDoc.id, email: user.email });
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
 app.post("/api/logout", (req, res) => {
