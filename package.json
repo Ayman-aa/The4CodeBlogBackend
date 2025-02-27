@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "express": "^4.21.2",
+    "firebase": "^11.3.1"
+  }
+}
