@@ -1,6 +1,7 @@
 import express from "express";
 import { getAuth, createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } from "firebase/auth";
 import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
+import bcrypt from "bcrypt";
 import { db } from "./firebase.js";
 
 const app = express();
@@ -86,19 +87,25 @@ app.delete("/api/delete-post/:id", async (req, res) => {
   }
 });
 
-app.post("/api/signup", (req, res) => {
-  const auth = getAuth();
-  createUserWithEmailAndPassword(auth, req.body.email, req.body.password)
-    .then((userCredential) => {
-      // Signed up
-      const user = userCredential.user;
-      res.send(user);
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      res.send(errorMessage);
+app.post("/api/signup", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).send("Email and password are required.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const docRef = await addDoc(collection(db, "users"), {
+      email: email,
+      password: hashedPassword,
     });
+
+    res.send({ id: docRef.id, email: email });
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
 });
 
 app.post("/api/login", (req, res) => {
