@@ -1,6 +1,6 @@
 import express from "express";
 import { getAuth, createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, updateDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase.js";
 
 const app = express();
@@ -39,17 +39,18 @@ app.put("/api/update-post/:id", async (req, res) => {
       return res.status(400).send("Title and description are required.");
     }
 
-    const docRef = await addDoc(collection(db, "posts"), {
+    const postRef = doc(db, "posts", req.params.id);
+    await updateDoc(postRef, {
       title: title,
       description: description,
     });
-    res.send(docRef.id);
+    res.send("Post updated successfully");
   } catch (e) {
     res.status(500).send(e.message);
   }
 });
 
-app.get("/api/get-posts", async (req, res) => {
+app.get("/api/posts", async (req, res) => {
   try {
     const posts = [];
     const querySnapshot = await getDocs(collection(db, "posts"));
@@ -57,6 +58,29 @@ app.get("/api/get-posts", async (req, res) => {
       posts.push({ id: doc.id, ...doc.data() });
     });
     res.send(posts);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+app.get("/api/post/:id", async (req, res) => {
+  try {
+    const postRef = doc(db, "posts", req.params.id);
+    const docSnap = await getDoc(postRef);
+    if (docSnap.exists()) {
+      res.send({ id: docSnap.id, ...docSnap.data() });
+    } else {
+      res.status(404).send("Post not found");
+    }
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+app.delete("/api/delete-post/:id", async (req, res) => {
+  try {
+    await deleteDoc(doc(db, "posts", req.params.id));
+    res.send("Post deleted successfully");
   } catch (e) {
     res.status(500).send(e.message);
   }
