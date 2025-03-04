@@ -4,6 +4,12 @@ import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, g
 import { db } from "./firebase.js";
 
 const app = express();
+const cors = require('cors');
+const corsOptions = {
+  origin: 'https://t5code.netlify.app',
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 const port = 3000;
 
 app.use(express.json()); // Middleware to parse JSON bodies
