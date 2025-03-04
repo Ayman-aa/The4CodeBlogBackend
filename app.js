@@ -1,10 +1,10 @@
 import express from "express";
 import bcrypt from "bcrypt";
+import cors from "cors";
 import { collection, addDoc, getDocs, query, where, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase.js";
 
 const app = express();
-const cors = require('cors');
 const corsOptions = {
   origin: 'https://t5code.netlify.app',
   optionsSuccessStatus: 200
